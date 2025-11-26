@@ -22,10 +22,9 @@ const ContextChips: React.FC<ContextChipsProps> = ({ files, contextDocIds, onRem
       {chips.map((file) => (
         <div
           key={file.id}
-          className="flex items-center gap-1.5 bg-gray-50 text-gray-700 text-sm px-2 py-1 rounded-md border border-gray-200 animate-in fade-in zoom-in duration-200"
-        >
-          <Paperclip size={10} className="text-gray-400" />
-          <span className="max-w-[160px] truncate font-medium">{file.name}</span>
+          className="flex items-center gap-1.5 bg-gray-50 text-gray-700 text-xs px-2 py-1 rounded-md border border-gray-200 animate-in fade-in zoom-in duration-200"
+        >          
+          <span className="max-w-[100px] truncate font-medium">{file.name}</span>
           <button
             onClick={() => onRemove(file.id)}
             className="text-gray-400 hover:text-red-500 ml-0.5"

@@ -1,10 +1,11 @@
-//frontend\src\components\MainLayout.tsx
+// frontend/src/components/MainLayout.tsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
 import ChatArea from "./ChatArea";
 import ConfigModal from "./ConfigModal";
 import DocumentsModal from "./DocumentsModal";
+import InputArea from "./InputArea";
 import { UploadedFile } from "../types";
 
 const API_URL = "http://localhost:8000/api"; // your backend URL
@@ -14,10 +15,39 @@ const MainLayout: React.FC = () => {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
   const [files, setFiles] = useState<UploadedFile[]>([]);
-  const [config, setConfig] = useState({ llmProvider: "openai", apiKey: "" });
+  const [config, setConfig] = useState({
+    llmProvider: "openai",
+    apiKey: "",
+    model: "",
+    chunkSize: 1000,
+    chunkOverlap: 200,
+    docLinkUrl: "",
+    temperature: 0.1,
+  });
   const [contextDocIds, setContextDocIds] = useState<string[]>([]); // server-side ids
   const [selectedFileRemoteId, setSelectedFileRemoteId] = useState<string | null>(null);
- 
+  const [isSelectingDocs, setIsSelectingDocs] = useState(false);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isContextOpen, setIsContextOpen] = useState(false);
+
+  // ===== Wrapper for safely updating selectedFileRemoteId =====
+  const updateSelectedFileRemoteId = (id: string | null) => {
+    console.log("updateSelectedFileRemoteId called with:", id);
+    
+    if (!id || typeof id !== "string") {
+      setSelectedFileRemoteId(null);
+      return;
+    }
+
+    const trimmed = id.trim();
+    if (!trimmed || trimmed === "[]" || trimmed === "null" || trimmed === "undefined") {
+      setSelectedFileRemoteId(null);
+      return;
+    }
+
+    setSelectedFileRemoteId(trimmed);
+  };
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token") || "";
@@ -30,19 +60,21 @@ const MainLayout: React.FC = () => {
       const res = await axios.get(`${API_URL}/files/list`, {
         headers: getAuthHeaders(),
       });
-      // server returns id,name,size,status,mime_type
+
       const serverFiles: UploadedFile[] = res.data.map((f: any) => ({
-        id: f.id, // use server id for selection
+        id: f.id,
         name: f.name,
         size: f.size,
         status: f.status || "ready",
         progress: 100,
-        remoteId: f.id
+        remoteId: f.id,
       }));
+
       setFiles(serverFiles);
+
       // pre-select first ready doc if nothing selected
       if (serverFiles.length > 0 && !selectedFileRemoteId) {
-        setSelectedFileRemoteId(serverFiles[0].id);
+        updateSelectedFileRemoteId(serverFiles[0].id);
       }
     } catch (err) {
       console.error("Error fetching files:", err);
@@ -51,28 +83,43 @@ const MainLayout: React.FC = () => {
 
   useEffect(() => {
     fetchFiles();
-    // poll once at mount; you can call fetchFiles more often if needed
   }, []);
 
   // When files list changes and nothing selected, pick first ready
   useEffect(() => {
     if (files.length > 0 && !selectedFileRemoteId) {
       const firstReady = files.find((f) => f.status === "ready")?.id;
-      if (firstReady) setSelectedFileRemoteId(firstReady);
+      if (firstReady) updateSelectedFileRemoteId(firstReady);
     }
   }, [files]);
 
   const handleDelete = async (id: string) => {
     try {
-      // id here might be local id; we expect remote id (server id) stored in file.id
       const token = localStorage.getItem("token") || "";
       await axios.delete(`${API_URL}/files/delete/${id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
+
       setFiles((prev) => prev.filter((f) => f.id !== id));
-      if (selectedFileRemoteId === id) setSelectedFileRemoteId(null);
+
+      if (selectedFileRemoteId === id) updateSelectedFileRemoteId(null);
     } catch (err) {
       console.error("Failed to delete file", err);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    setIsLoading(true);
+
+    try {
+      // Your send logic here
+      console.log("Sending message:", input);
+    } catch (err) {
+      console.error("Error sending message:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,7 +136,7 @@ const MainLayout: React.FC = () => {
         setIsDocsModalOpen={setIsDocsModalOpen}
         isSidebarOpen={sidebarOpen}
         files={files}
-        onSelect={(fileId: string) => setSelectedFileRemoteId(fileId)}
+        onSelect={updateSelectedFileRemoteId}
         selectedFileRemoteId={selectedFileRemoteId}
       />
 
@@ -98,9 +145,13 @@ const MainLayout: React.FC = () => {
         files={files}
         contextDocIds={contextDocIds}
         setContextDocIds={setContextDocIds}
+        isContextOpen={isContextOpen}       
+        setIsContextOpen={setIsContextOpen} 
+        setIsSelectingDocs={setIsSelectingDocs} 
+        isSelectingDocs={isSelectingDocs}        
         setIsDocsModalOpen={setIsDocsModalOpen}
         selectedFileRemoteId={selectedFileRemoteId}
-        setSelectedFileRemoteId={setSelectedFileRemoteId}
+        setSelectedFileRemoteId={updateSelectedFileRemoteId}
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
       />
 
@@ -118,9 +169,24 @@ const MainLayout: React.FC = () => {
         setFiles={setFiles}
         onDelete={handleDelete}
         onFileClick={(file) => {
-          setSelectedFileRemoteId(file.remoteId || null); // update viewer
+          updateSelectedFileRemoteId(file.remoteId || null);
           setIsDocsModalOpen(false);
         }}
+      />
+
+      <InputArea
+        input={input}
+        setInput={setInput}
+        isLoading={isLoading}
+        handleSend={handleSend}
+        contextDocIds={contextDocIds}
+        files={files}
+        isContextOpen={isContextOpen}
+        isSelectingDocs={isSelectingDocs}
+        setIsContextOpen={setIsContextOpen}
+        setIsSelectingDocs={setIsSelectingDocs}
+        setContextDocIds={setContextDocIds}
+        setIsDocsModalOpen={setIsDocsModalOpen}
       />
     </div>
   );

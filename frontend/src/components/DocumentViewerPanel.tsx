@@ -1,4 +1,4 @@
-// src/components/DocumentViewerPanel.tsx
+// frontend/src/components/DocumentViewerPanel.tsx
 import React from 'react';
 import { FileText, X } from 'lucide-react';
 import DocumentViewerContent from './DocumentViewerContent';
@@ -9,10 +9,22 @@ interface DocumentViewerPanelProps {
   onClose: () => void;
 }
 
-const DocumentViewerPanel: React.FC<DocumentViewerPanelProps> = ({ remoteId, fileName, onClose }) => {
+const DocumentViewerPanel: React.FC<DocumentViewerPanelProps> = ({ 
+  remoteId, 
+  fileName, 
+  onClose 
+}) => {
+
+  const safeRemoteId = Array.isArray(remoteId) ? remoteId[0] : remoteId;
+  // Prevent rendering if remoteId is invalid
+  if (!safeRemoteId || typeof safeRemoteId !== "string" || safeRemoteId.trim() === "") {
+    return null;
+  }
+
   return (
-    <div className="hidden md:flex flex-col w-1/2 bg-white h-full border-l border-gray-200 animate-in slide-in-from-right duration-300">
-      <div className="h-12 border-b border-gray-200 flex items-center justify-between px-4 bg-gray-50">
+    <div className="hidden md:flex flex-col w-1/2 bg-white h-full border-l border-gray-200 animate-in slide-in-from-right duration-300 ">
+      {/* Header */}
+      <div className="h-12 border-b border-gray-200 flex items-center justify-between px-4 bg-gray-50 ">
         <span className="font-medium text-gray-700 text-sm flex items-center gap-2 truncate">
           <FileText size={16} className="text-gray-400 flex-shrink-0" />
           <span className="truncate">{fileName}</span>
@@ -25,8 +37,13 @@ const DocumentViewerPanel: React.FC<DocumentViewerPanelProps> = ({ remoteId, fil
           <X size={18} />
         </button>
       </div>
-      <div className="flex-1 overflow-hidden">
-        <DocumentViewerContent remoteId={remoteId} localName={fileName} />
+
+      {/* PDF Viewer */}
+      <div className="flex-1 overflow-hidden h-full w-full">
+        <DocumentViewerContent 
+          remoteId={safeRemoteId} 
+          localName={fileName} 
+        />
       </div>
     </div>
   );

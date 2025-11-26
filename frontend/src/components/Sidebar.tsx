@@ -1,5 +1,5 @@
 // components/Sidebar.tsx
-import React, { useState } from 'react';
+import React from 'react'; // Removed unused useState import
 import { UploadedFile, Config } from '../types';
 import { 
   Settings, 
@@ -38,7 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className={`bg-gray-900 text-gray-300 flex flex-col transition-all duration-300 ease-in-out border-r border-gray-800 overflow-hidden relative ${isOpen ? 'w-80' : 'w-20'}`}>
+    <div className={`bg-gray-900 text-gray-300 min-w-80 flex flex-col transition-all duration-300 ease-in-out border-r border-gray-800 overflow-hidden relative ${isOpen ? 'w-80' : 'w-20'}`}>
       {/* Sidebar Header */}
         <div className="p-5 border-b border-gray-800 flex items-center gap-3 min-w-72">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">

@@ -5,14 +5,12 @@ interface DocumentSelectorProps {
   files: UploadedFile[];
   contextDocIds: string[];
   setContextDocIds: (ids: string[]) => void;
-  onClose: () => void;
 }
 
 const DocumentSelector: React.FC<DocumentSelectorProps> = ({ 
   files, 
   contextDocIds, 
   setContextDocIds, 
-  onClose 
 }) => {
   // Only show documents that are 'ready'
   const [searchTerm, setSearchTerm] = useState("");

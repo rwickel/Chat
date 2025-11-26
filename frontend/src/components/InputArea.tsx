@@ -28,7 +28,7 @@ const InputArea: React.FC<InputAreaProps> = ({
   files,
   isContextOpen,
   isSelectingDocs,
-  setIsContextOpen,
+  setIsContextOpen, // This was missing in the original
   setIsSelectingDocs,
   setContextDocIds,
   setIsDocsModalOpen,

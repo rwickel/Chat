@@ -39,8 +39,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCitationClick 
         } p-4`}
       >
         <SimpleTextRenderer
-          content={message.content}
-          isBot={!isUser}
+          content={message.content}          
           onCitationClick={onCitationClick}
         />
       </div>
