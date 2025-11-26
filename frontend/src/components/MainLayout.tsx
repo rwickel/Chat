@@ -5,7 +5,6 @@ import Sidebar from "./Sidebar";
 import ChatArea from "./ChatArea";
 import ConfigModal from "./ConfigModal";
 import DocumentsModal from "./DocumentsModal";
-import InputArea from "./InputArea";
 import { UploadedFile } from "../types";
 
 const API_URL = "http://localhost:8000/api"; // your backend URL
@@ -26,9 +25,7 @@ const MainLayout: React.FC = () => {
   });
   const [contextDocIds, setContextDocIds] = useState<string[]>([]); // server-side ids
   const [selectedFileRemoteId, setSelectedFileRemoteId] = useState<string | null>(null);
-  const [isSelectingDocs, setIsSelectingDocs] = useState(false);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSelectingDocs, setIsSelectingDocs] = useState(false);  ;
   const [isContextOpen, setIsContextOpen] = useState(false);
 
   // ===== Wrapper for safely updating selectedFileRemoteId =====
@@ -106,22 +103,7 @@ const MainLayout: React.FC = () => {
     } catch (err) {
       console.error("Failed to delete file", err);
     }
-  };
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    setIsLoading(true);
-
-    try {
-      // Your send logic here
-      console.log("Sending message:", input);
-    } catch (err) {
-      console.error("Error sending message:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  };  
 
   return (
     <div className="flex h-screen">

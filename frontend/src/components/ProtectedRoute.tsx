@@ -1,5 +1,5 @@
 // components/ProtectedRoute.tsx
-import React from 'react';
+import * as React from 'react';
 import { Navigate } from 'react-router-dom';
 
 interface ProtectedRouteProps {

@@ -1,5 +1,5 @@
 // src/components/MobileDocumentOverlay.tsx
-import React from 'react';
+import * as React from 'react';
 import { ChevronRight } from 'lucide-react';
 import DocumentViewerContent from './DocumentViewerContent';
 

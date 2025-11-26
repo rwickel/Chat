@@ -7,20 +7,24 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
-    // 👇 Add proxy for API requests in development
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000', // 👈 your backend URL
-        changeOrigin: true,             // needed for virtual hosts
-        secure: false,                  // disable SSL check for localhost
-        // Optional: log proxy requests for debugging
-        // configure: (proxy, options) => {
-        //   console.log('Proxying:', options.target + options.path);
-        // },
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
       },
+    },
+    // ✅ CRITICAL: Allow Vite to serve public files AND node_modules/pdfjs-dist
+    fs: {
+      allow: [
+        '.', // project root
+        'node_modules/pdfjs-dist/build', // explicitly allow PDF.js worker files
+      ],
     },
   },
   build: {
     sourcemap: true,
   },
+  // ✅ CRITICAL: Tell Vite where static assets live
+  publicDir: 'public',
 });

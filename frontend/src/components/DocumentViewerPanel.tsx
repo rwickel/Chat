@@ -1,5 +1,5 @@
 // frontend/src/components/DocumentViewerPanel.tsx
-import React from 'react';
+import * as React from 'react';
 import { FileText, X } from 'lucide-react';
 import DocumentViewerContent from './DocumentViewerContent';
 

@@ -1,8 +1,9 @@
 // src/components/InputArea.tsx
-import React, { useRef } from 'react';
+import * as React from 'react';
 import { Send, Paperclip, ChevronRight } from 'lucide-react';
 import ContextChips from './ContextChips';
 import ContextMenu from './ContextMenu';
+import { UploadedFile } from '../types';
 
 interface InputAreaProps {
   input: string;
@@ -10,7 +11,7 @@ interface InputAreaProps {
   isLoading: boolean;
   handleSend: () => void;
   contextDocIds: string[];
-  files: { id: string; name: string }[];
+  files: UploadedFile[];
   isContextOpen: boolean;
   isSelectingDocs: boolean;
   setIsContextOpen: (open: boolean) => void;
@@ -33,7 +34,7 @@ const InputArea: React.FC<InputAreaProps> = ({
   setContextDocIds,
   setIsDocsModalOpen,
 }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const contextSummary =
     contextDocIds.length === 0
       ? 'No context'
@@ -85,9 +86,8 @@ const InputArea: React.FC<InputAreaProps> = ({
             onChange={handleTextareaInput}
             onKeyDown={handleKeyDown}
             placeholder={`Ask a question with context from: ${contextSummary}…`}
-            className="w-full bg-transparent border-0 text-gray-900 rounded-2xl pl-6 pr-4 py-4 focus:outline-none focus:ring-0 resize-none text-lg"
+            className="w-full bg-transparent border-0 text-gray-900 rounded-2xl pl-6 pr-4 py-4 focus:outline-none focus:ring-0 resize-none text-lg min-h-14"
             rows={1}
-            style={{ minHeight: '56px' }}
             disabled={isLoading}
             aria-label="Type your message"
           />
@@ -97,7 +97,7 @@ const InputArea: React.FC<InputAreaProps> = ({
               <button
                 onClick={toggleContextMenu}
                 aria-controls="context-menu"
-                aria-expanded={isContextOpen}
+                aria-expanded={isContextOpen ? "true" : "false"}
                 className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium ${
                   isContextOpen
                     ? 'bg-gray-100 text-gray-900'

@@ -1,5 +1,5 @@
 // components/Sidebar.tsx
-import React from 'react'; // Removed unused useState import
+import * as React from 'react'; // Removed unused useState import
 import { UploadedFile, Config } from '../types';
 import { 
   Settings, 
@@ -25,7 +25,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-   isOpen, toggleSidebar, setIsConfigOpen, setIsDocsModalOpen, files, onSelect, selectedFileRemoteId
+   isOpen, setIsConfigOpen, setIsDocsModalOpen, files, onSelect, selectedFileRemoteId
 }) => {  
 
   const handleLogout = () => {

@@ -1,5 +1,5 @@
 // src/components/MessageBubble.tsx
-import React from 'react';
+import * as React from 'react';
 import { User, Bot } from 'lucide-react';
 import SimpleTextRenderer from './SimpleTextRenderer';
 import { Message } from '../types';

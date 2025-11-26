@@ -1,3 +1,4 @@
+// src\components\DocumentSelector.tsx
 import React, { useState } from 'react';
 import { UploadedFile } from '../types'; // Adjust import path as needed
 import { CheckSquare, Square, Search} from 'lucide-react';
@@ -49,10 +50,10 @@ const DocumentSelector: React.FC<DocumentSelectorProps> = ({
             onClick={() => toggleFile(f.id)}
           >
             {contextDocIds.includes(f.id) 
-              ? <CheckSquare className="w-5 h-5 text-blue-600" />
-              : <Square className="w-5 h-5 text-gray-300" />
+              ? <CheckSquare className="w-4 h-4 text-blue-600" />
+              : <Square className="w-4 h-4 text-gray-300" />
             }
-            <span className="text-md text-gray-800 truncate">{f.name}</span>
+            <span className="text-sm text-gray-800 truncate">{f.name}</span>
           </div>
         ))
       )}

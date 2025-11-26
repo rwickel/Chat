@@ -1,5 +1,5 @@
 // src/components/EmptyState.tsx
-import React from 'react';
+import * as React from 'react';
 import { Bot } from 'lucide-react';
 
 const EmptyState: React.FC = () => {

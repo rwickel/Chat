@@ -1,5 +1,5 @@
 // src/components/ContextChips.tsx
-import React from 'react';
+import * as React from 'react';
 import { Paperclip, X } from 'lucide-react';
 import { UploadedFile } from '../types';
 

@@ -4,6 +4,7 @@ import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
 import DocumentViewerContent from './DocumentViewerContent';
+import type { UploadedFile, Message } from "../types";
 
 interface ChatAreaProps {
   sidebarOpen: boolean;
@@ -20,6 +21,7 @@ interface ChatAreaProps {
   toggleSidebar: () => void;
 }
 
+
 const ChatArea: React.FC<ChatAreaProps> = ({
   sidebarOpen,
   files,
@@ -33,7 +35,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   selectedFileRemoteId,
   setSelectedFileRemoteId,
   toggleSidebar,
-}) => {
+}: ChatAreaProps) => {
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
