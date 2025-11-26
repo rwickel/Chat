@@ -5,6 +5,16 @@ import MainLayout from './components/MainLayout';
 import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 
+// ESM imports for modern pdfjs-dist
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.min.mjs';
+
+//  Configure worker — Vite-safe with .mjs
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  '/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
+
+
 const App: React.FC = () => {
   return (
     <Router>

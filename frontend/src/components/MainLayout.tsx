@@ -174,20 +174,7 @@ const MainLayout: React.FC = () => {
         }}
       />
 
-      <InputArea
-        input={input}
-        setInput={setInput}
-        isLoading={isLoading}
-        handleSend={handleSend}
-        contextDocIds={contextDocIds}
-        files={files}
-        isContextOpen={isContextOpen}
-        isSelectingDocs={isSelectingDocs}
-        setIsContextOpen={setIsContextOpen}
-        setIsSelectingDocs={setIsSelectingDocs}
-        setContextDocIds={setContextDocIds}
-        setIsDocsModalOpen={setIsDocsModalOpen}
-      />
+     
     </div>
   );
 };
