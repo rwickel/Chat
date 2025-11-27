@@ -44,3 +44,18 @@ export interface Config {
   llmProvider: string;
   apiKey: string;
 }
+
+export interface SearchResult {
+  page: number;
+  text: string;
+  matchIndex: number;
+  totalMatches: number;
+  itemIndex: number;
+}
+
+export interface DocumentViewerContentProps {
+  remoteId?: string | undefined;
+  localName?: string;
+  page?: number; // 1-based
+  searchResults?: SearchResult[]; // optional precomputed search results from llm
+}

@@ -3,7 +3,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
-import DocumentViewerContent from './DocumentViewerContent';
+import DocumentViewer from './DocumentViewer';
 import type { UploadedFile, Message } from "../types";
 
 interface ChatAreaProps {
@@ -49,11 +49,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const docViewerRef = useRef<HTMLDivElement>(null);      // NEW: Ref for the Document Viewer
   const startXRef = useRef(0);
   const startChatWidthRef = useRef(0);
-  const currentChatWidthRef = useRef(chatWidth); 
-  
-
+  const currentChatWidthRef = useRef(chatWidth);
   const selectedFile = files.find((f) => f.remoteId === selectedFileRemoteId);
   const shouldShowDocViewer = Boolean(selectedFileRemoteId && selectedFile);
+  
+
+  const handleCloseViewer = () => {    
+    setSelectedFileRemoteId(null);
+  };
 
   const handleSend = useCallback(() => {
     if (!input.trim() || isLoading) return;
@@ -202,9 +205,10 @@ Based on the uploaded documents, the Q3 revenue grew by 15% compared to the prev
               // Set initial width from state. This value is used until dragging starts.
               width: shouldShowDocViewer ? `${100 - chatWidth}%` : '100%',
             }}
-          >
-            <DocumentViewerContent
+          >            
+            <DocumentViewer
               remoteId={selectedFileRemoteId!}
+              onClose={handleCloseViewer} 
             />
           </div>
         )}
