@@ -58,7 +58,7 @@ Before you begin, ensure you have the following installed:
    yarn dev
    ```
 
-   The application should now be running on [http://localhost:3000](http://localhost:3000).
+   The application should now be running on [http://localhost:5173/](http://localhost:5173/).
 
 ## Project Structure
 

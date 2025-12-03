@@ -1,119 +1,58 @@
-// frontend/src/components/MainLayout.tsx
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import ChatArea from "./ChatArea";
 import ConfigModal from "./ConfigModal";
 import DocumentsModal from "./DocumentsModal";
-import { UploadedFile } from "../types";
 
-const API_URL = "http://localhost:8000/api"; // your backend URL
+// Hooks
+import { useFiles } from "../hooks/useFiles";
+import { useConfig } from "../hooks/useConfig";
+import { useFileSelection } from "../hooks/useFileSelection";
 
 const MainLayout: React.FC = () => {
+  // 1. UI State for Layout
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
-  const [files, setFiles] = useState<UploadedFile[]>([]);
-  const [config, setConfig] = useState({
-    llmProvider: "openai",
-    apiKey: "",
-    model: "",
-    chunkSize: 1000,
-    chunkOverlap: 200,
-    docLinkUrl: "",
-    temperature: 0.1,
-  });
-  const [contextDocIds, setContextDocIds] = useState<string[]>([]); // server-side ids
-  const [selectedFileRemoteId, setSelectedFileRemoteId] = useState<string | null>(null);
-  const [isSelectingDocs, setIsSelectingDocs] = useState(false);  ;
-  const [isContextOpen, setIsContextOpen] = useState(false);
 
-  // ===== Wrapper for safely updating selectedFileRemoteId =====
-  const updateSelectedFileRemoteId = (id: string | null) => {
-    console.log("updateSelectedFileRemoteId called with:", id);
-    
-    if (!id || typeof id !== "string") {
-      setSelectedFileRemoteId(null);
-      return;
-    }
+  // 2. Logic Hooks
+  const { 
+    files, 
+    uploadFiles, 
+    deleteFile, 
+    cancelUpload 
+  } = useFiles();
 
-    const trimmed = id.trim();
-    if (!trimmed || trimmed === "[]" || trimmed === "null" || trimmed === "undefined") {
-      setSelectedFileRemoteId(null);
-      return;
-    }
+  const {
+    selectedFileRemoteId,
+    updateSelectedFileRemoteId,
+    contextDocIds,
+    setContextDocIds,
+    isSelectingDocs,
+    setIsSelectingDocs,
+    isContextOpen,
+    setIsContextOpen,
+    isDocsModalOpen,
+    setIsDocsModalOpen
+  } = useFileSelection(files);
 
-    setSelectedFileRemoteId(trimmed);
-  };
+  const { 
+    config, 
+    updateConfig, 
+    isConfigOpen, 
+    setIsConfigOpen 
+  } = useConfig();
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token") || "";
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
-  // Fetch files from backend (server-side metadata)
-  const fetchFiles = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/files/list`, {
-        headers: getAuthHeaders(),
-      });
-
-      const serverFiles: UploadedFile[] = res.data.map((f: any) => ({
-        id: f.id,
-        name: f.name,
-        size: f.size,
-        status: f.status || "ready",
-        progress: 100,
-        remoteId: f.id,
-      }));
-
-      setFiles(serverFiles);
-
-      // pre-select first ready doc if nothing selected
-      if (serverFiles.length > 0 && !selectedFileRemoteId) {
-        updateSelectedFileRemoteId(serverFiles[0].id);
-      }
-    } catch (err) {
-      console.error("Error fetching files:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchFiles();
-  }, []);
-
-  // When files list changes and nothing selected, pick first ready
-  useEffect(() => {
-    if (files.length > 0 && !selectedFileRemoteId) {
-      const firstReady = files.find((f) => f.status === "ready")?.id;
-      if (firstReady) updateSelectedFileRemoteId(firstReady);
-    }
-  }, [files]);
-
-  const handleDelete = async (id: string) => {
-    try {
-      const token = localStorage.getItem("token") || "";
-      await axios.delete(`${API_URL}/files/delete/${id}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-
-      setFiles((prev) => prev.filter((f) => f.id !== id));
-
-      if (selectedFileRemoteId === id) updateSelectedFileRemoteId(null);
-    } catch (err) {
-      console.error("Failed to delete file", err);
-    }
-  };  
+  // Helper to toggle sidebar
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
     <div className="flex h-screen">
       <Sidebar
         isOpen={sidebarOpen}
-        toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        toggleSidebar={toggleSidebar}
         isConfigOpen={isConfigOpen}
         setIsConfigOpen={setIsConfigOpen}
         config={config}
-        setConfig={setConfig}
+        setConfig={updateConfig} // Adapting hook to component prop
         isDocsModalOpen={isDocsModalOpen}
         setIsDocsModalOpen={setIsDocsModalOpen}
         isSidebarOpen={sidebarOpen}
@@ -127,36 +66,37 @@ const MainLayout: React.FC = () => {
         files={files}
         contextDocIds={contextDocIds}
         setContextDocIds={setContextDocIds}
-        isContextOpen={isContextOpen}       
-        setIsContextOpen={setIsContextOpen} 
-        setIsSelectingDocs={setIsSelectingDocs} 
-        isSelectingDocs={isSelectingDocs}        
+        isContextOpen={isContextOpen}
+        setIsContextOpen={setIsContextOpen}
+        setIsSelectingDocs={setIsSelectingDocs}
+        isSelectingDocs={isSelectingDocs}
         setIsDocsModalOpen={setIsDocsModalOpen}
         selectedFileRemoteId={selectedFileRemoteId}
         setSelectedFileRemoteId={updateSelectedFileRemoteId}
-        toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        toggleSidebar={toggleSidebar}
       />
 
       <ConfigModal
         isOpen={isConfigOpen}
         onClose={() => setIsConfigOpen(false)}
         config={config}
-        onSave={setConfig}
+        onSave={updateConfig} // Adapting hook to component prop
       />
 
       <DocumentsModal
         isOpen={isDocsModalOpen}
         onClose={() => setIsDocsModalOpen(false)}
         files={files}
-        setFiles={setFiles}
-        onDelete={handleDelete}
+        onUpload={uploadFiles} // Pass the hook function directly
+        onAbort={cancelUpload} // Pass the hook function directly
+        onDelete={deleteFile}  // Pass the hook function directly
         onFileClick={(file) => {
-          updateSelectedFileRemoteId(file.remoteId || null);
-          setIsDocsModalOpen(false);
+          if (file.status === "ready" && file.remoteId) {
+            updateSelectedFileRemoteId(file.remoteId);
+            setIsDocsModalOpen(false);
+          }
         }}
       />
-
-     
     </div>
   );
 };

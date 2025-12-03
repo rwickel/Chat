@@ -1,6 +1,6 @@
 // src/components/pdf_viewer/Toolbar.tsx
 
-import React, { RefObject } from 'react';
+import React, { RefObject, useState, useEffect } from 'react';
 
 import { 
     ChevronLeft, 
@@ -61,8 +61,47 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onAutoZoom,
   searchInputRef
 }) => {
+  const [pageInput, setPageInput] = useState<string>(currentPage.toString());
+
+  // Update the input when currentPage changes externally
+  useEffect(() => {
+    setPageInput(currentPage.toString());
+  }, [currentPage]);
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value);
+  };
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const pageNum = parseInt(pageInput, 10);
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= numPages) {
+      onPageChange(pageNum);
+    } else {
+      // Reset to current page if invalid
+      setPageInput(currentPage.toString());
+    }
+  };
+
+  const handlePageInputBlur = () => {
+    const pageNum = parseInt(pageInput, 10);
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= numPages) {
+      onPageChange(pageNum);
+    } else {
+      // Reset to current page if invalid
+      setPageInput(currentPage.toString());
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePageInputSubmit(e);
+    }
+  };
+
   return (
-    <div className="flex w-full  items-center justify-between">
+    <div className="flex w-full items-center justify-between">
       {/* Left: Page Navigation */}
       <div className="flex items-center gap-1 border-r border-gray-200 pr-2 mr-2">
         <button 
@@ -73,9 +112,22 @@ const Toolbar: React.FC<ToolbarProps> = ({
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
-        <span className="text-lg font-medium text-gray-700 min-w-[3rem] text-center">
-          {currentPage} / {numPages}
-        </span>
+        
+        {/* Editable Page Input */}
+        <form onSubmit={handlePageInputSubmit} className="flex items-center">
+          <input
+            type="text"
+            value={pageInput}
+            onChange={handlePageInputChange}
+            onBlur={handlePageInputBlur}
+            onKeyDown={handleKeyDown}
+            className="w-12 text-lg font-medium text-gray-700 text-center border border-transparent hover:border-gray-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            aria-label="Current page"
+          />
+          <span className="text-lg font-medium text-gray-700 mx-1">/</span>
+          <span className="text-lg font-medium text-gray-700">{numPages}</span>
+        </form>
+        
         <button 
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= numPages}

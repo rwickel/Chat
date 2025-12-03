@@ -10,6 +10,8 @@ import {
   Bot,  
 } from 'lucide-react';
 
+import './sidebar.css';
+
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
@@ -51,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
       {/* Document List */}
-      <div className="flex-1 overflow-y-auto py-8 ">
+      <div className="flex-1 overflow-y-auto py-8 sidebar-scrollbar">
         <div className="px-4 mb-2 text-md font-semibold text-gray-500 uppercase tracking-wider">
           Documents
         </div>
@@ -82,7 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <div className="absolute bottom-0 w-full p-4 border-t border-gray-800">
+      <div className=" bottom-0 w-full p-4 border-t border-gray-800">
         <button 
           onClick={() => setIsDocsModalOpen(true)}
           className="flex items-center gap-3 w-full p-2.5 hover:bg-gray-800 rounded-lg text-md text-gray-400 hover:text-white transition-colors"

@@ -1,14 +1,13 @@
+// src/components/DocumentViewer.tsx
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { Search, X } from 'lucide-react'; // <-- added X icon
+import { Search, X } from 'lucide-react';
 
-// Import the Toolbar component properly
 import Toolbar from './pdf_viewer/Toolbar';
 import MainContentArea from './pdf_viewer/MainContentArea';
 
 import { SearchResult } from '../types';
 
-// Define pdfjsLib globally.
 declare const pdfjsLib: any;
 
 const API_URL = 'http://localhost:8000/api';
@@ -16,16 +15,20 @@ const API_URL = 'http://localhost:8000/api';
 interface DocumentContentProps {
   remoteId?: string | undefined;
   localName?: string;
-  page?: number; // 1-based
-  searchResults?: SearchResult[]; // optional precomputed search results from llm
-  /** Expose the auto‑zoom calculation to the parent */
+  page?: number;
+  /** Search results from parent */
+  searchResults?: SearchResult[];
+  /** Callback to update search results in parent */
+  onSearchResultsChange?: (results: SearchResult[]) => void;
   onCalculateAutoZoom?: (pageWidth: number, pageHeight: number) => number;
-  onClose: () => void; // Add this prop
+  onClose: () => void;
 }
 
 const DocumentViewer: React.FC<DocumentContentProps> = ({
   remoteId, 
   page: targetPage = 1,
+  searchResults = [], // Default to empty array
+  onSearchResultsChange,
   onCalculateAutoZoom, 
   onClose, 
 }) => {
@@ -42,7 +45,6 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(0);
   const [showResultsPanel, setShowResultsPanel] = useState(false);
   const [pageTextContent, setPageTextContent] = useState<any>(null);
@@ -60,30 +62,24 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
       if (!containerRef.current) return 1.0;
 
       const container = containerRef.current;
-      const availableWidth = container.clientWidth - 64; // accounting for padding
-      const availableHeight = container.clientHeight - 64; // accounting for padding and toolbar
+      const availableWidth = container.clientWidth - 64;
+      const availableHeight = container.clientHeight - 64;
 
-      // If search panel is visible, subtract its width
       const searchPanelWidth = showResultsPanel ? 80 : 0;
       const adjustedAvailableWidth = availableWidth - searchPanelWidth;
 
-      // Calculate zoom factors for both dimensions
       const widthZoom = adjustedAvailableWidth / pageWidth;
       const heightZoom = availableHeight / pageHeight;
 
-      // Use the smaller zoom factor to ensure the entire page fits
-      const calculatedZoom = Math.min(widthZoom, heightZoom) * 0.95; // 5% margin
+      const calculatedZoom = Math.min(widthZoom, heightZoom) * 0.95;
 
-      // Limit zoom range
       return Math.max(0.1, Math.min(calculatedZoom, 3.0));
     },
-    [showResultsPanel] // <-- depend on panel visibility
+    [showResultsPanel]
   );
 
-  // Expose the function to the parent if a callback is supplied
   useEffect(() => {
     if (onCalculateAutoZoom) {
-      // Provide a wrapper that forwards the same signature
       onCalculateAutoZoom(pageDimensions?.width ?? 0, pageDimensions?.height ?? 0);
     }
   }, [onCalculateAutoZoom, pageDimensions]);
@@ -139,7 +135,6 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
         setNumPages(pdfDoc.numPages);
         setCurrentPage(1);
 
-        // Get first page dimensions for auto zoom calculation
         const firstPage = await pdfDoc.getPage(1);
         await updatePageDimensions(firstPage);
       } catch (err: any) {
@@ -170,10 +165,8 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
       setZoomLevel(calculatedZoom);
     };
 
-    // Calculate initial zoom
     calculateAndSetZoom();
 
-    // Add resize listener
     const handleResize = () => {
       calculateAndSetZoom();
     };
@@ -185,7 +178,10 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
   // ================ SEARCH FUNCTIONALITY ================
   const performSearch = useCallback(async () => {
     if (!pdf || !searchQuery.trim()) {
-      setSearchResults([]);
+      // Clear results via callback if provided
+      if (onSearchResultsChange) {
+        onSearchResultsChange([]);
+      }
       setCurrentMatchIndex(0);
       return;
     }
@@ -211,7 +207,7 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
               page: pageNum,
               text: item.str,
               matchIndex: totalMatchCount,
-              totalMatches: 0, // Will be updated later
+              totalMatches: 0,
               itemIndex: itemIndex,
             });
           }
@@ -225,7 +221,11 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
         });
       }
 
-      setSearchResults(results);
+      // Update search results via callback
+      if (onSearchResultsChange) {
+        onSearchResultsChange(results);
+      }
+      
       setCurrentMatchIndex(results.length > 0 ? 1 : 0);
 
       // Auto-show results panel when there are results
@@ -235,7 +235,7 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
     } catch (err) {
       console.error('Search error:', err);
     }
-  }, [pdf, searchQuery, numPages]);
+  }, [pdf, searchQuery, numPages, onSearchResultsChange]);
 
   // Trigger search when query changes
   useEffect(() => {
@@ -258,7 +258,6 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
       try {
         const page = await pdf.getPage(pageNum);
 
-        // Update page dimensions if auto zoom is enabled
         if (autoZoom) {
           await updatePageDimensions(page);
         }
@@ -274,7 +273,6 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
         canvas.style.width = `${viewport.width}px`;
         canvas.style.height = `${viewport.height}px`;
 
-        // Draw PDF to canvas
         const renderContext = {
           canvasContext: context,
           viewport: viewport,
@@ -284,7 +282,6 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
         renderTaskRef.current = renderTask;
         await renderTask.promise;
 
-        // Fetch Text Content for Highlighting
         const textContent = await page.getTextContent();
         setPageTextContent({ items: textContent.items, viewport });
       } catch (err: any) {
@@ -296,7 +293,6 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
     [pdf, numPages, zoomLevel, rotation, autoZoom, updatePageDimensions]
   );
 
-  // Trigger render when deps change
   useEffect(() => {
     if (pdf) renderPage(currentPage);
   }, [currentPage, pdf, renderPage]);
@@ -305,14 +301,16 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= numPages) {
       setCurrentPage(newPage);
-      // Reset current match index when manually changing pages
       setCurrentMatchIndex(0);
     }
   };
 
   const clearSearch = () => {
     setSearchQuery('');
-    setSearchResults([]);
+    // Clear results via callback
+    if (onSearchResultsChange) {
+      onSearchResultsChange([]);
+    }
     setCurrentMatchIndex(0);
     setShowResultsPanel(false);
     searchInputRef.current?.focus();
@@ -383,20 +381,19 @@ const DocumentViewer: React.FC<DocumentContentProps> = ({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-red-50 border-l border-red-100 p-6 text-center">
-        <p className="text-red-600 font-semibold mb-1">Unable to load document</p>
-        <p className="text-xs text-red-500 bg-white px-2 py-1 rounded border border-red-200">{error}</p>
+        <p className="text-red-600 text-xl font-semibold mb-1">Unable to load document</p>
+        <p className="text-md text-red-500 bg-white px-2 py-1 rounded border border-red-200">{error}</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full bg-gray-100 border-l border-gray-200 w-full" ref={containerRef}>
-      {/* Toolbar with close button overlay */}
       <div className="flex w-full items-center justify-between relative bg-white border-b border-gray-200 h-16 shadow-sm z-10">
         
         <button
           type="button"
-          className=" flex rounded-full bg-gray-200 hover:bg-gray-300 transition-colors ml-4 p-1"
+          className="flex rounded-full bg-gray-200 hover:bg-gray-300 transition-colors ml-4 p-1"
           onClick={onClose}
         >
           <X className="w-5 h-5 text-gray-600" />
