@@ -182,7 +182,7 @@ class TestIntegrationMocked(unittest.TestCase):
     @patch('utils.pdf_extraction.recursive_chunking')
     @patch('utils.pdf_extraction.embed_texts')
     @patch('utils.pdf_extraction.store_chunks_in_chroma')
-    @patch('utils.pdf_extraction.update_file_metadata')
+    @patch('utils.pdf_extraction.update_file')
     @patch('utils.pdf_extraction.get_event_loop')
     def test_process_file_background_success(
         self, mock_get_loop, mock_update_meta, mock_store_chroma,
@@ -219,11 +219,11 @@ class TestIntegrationMocked(unittest.TestCase):
         mock_chunking.assert_called_once()
         mock_embed.assert_called_once()
         mock_store_chroma.assert_called_once()
-        # Should call update_file_metadata 2 times (embedding + ready)
+        # Should call update_file 2 times (embedding + ready)
         self.assertEqual(mock_update_meta.call_count, 2)
     
     @patch('utils.pdf_extraction.extract_text')
-    @patch('utils.pdf_extraction.update_file_metadata')
+    @patch('utils.pdf_extraction.update_file')
     @patch('utils.pdf_extraction.get_event_loop')
     def test_process_file_background_empty_text(
         self, mock_get_loop, mock_update_meta, mock_extract_text
@@ -247,7 +247,7 @@ class TestIntegrationMocked(unittest.TestCase):
             )
         
         self.assertIn("No text extracted", str(cm.exception))
-        # Should still call update_file_metadata for error status
+        # Should still call update_file for error status
         mock_update_meta.assert_called()
 
 if __name__ == '__main__':

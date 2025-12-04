@@ -1,6 +1,8 @@
-# ===== IMPORTS (add asyncio at top if not present) =====
-import asyncio  # ← ADD THIS if not already imported
+# backend/main.py
+
+import asyncio  
 import os
+import sys
 import time
 import uvicorn
 import logging
@@ -11,19 +13,41 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from routers import system, files, tools, chat
 from core.event_loop import set_event_loop, shutdown_executor
-from services.vector_store import init_chroma
+from utils.db import metadata_store
 
 # ===== GLOBAL EVENT LOOP REFERENCE =====
 _GLOBAL_LOOP = None  # ← ADDED: will hold main event loop
 
-# ===== LOGGING CONFIG =====
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+# --- Replacement for logging.basicConfig in main.py ---
+LOG_FILE_PATH = "app.log"  # Define your log file name
+# 1. Get the root logger
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO) # Set the minimum level for all loggers
+
+# 2. Define the formatter
+formatter = logging.Formatter(
+    fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
-logger = logging.getLogger("agentic-rag")
 
+# 3. Create a File Handler
+file_handler = logging.FileHandler(LOG_FILE_PATH)
+file_handler.setFormatter(formatter)
+root_logger.addHandler(file_handler)
+
+# 4. Create a Stream Handler (for console output, often useful)
+# FIX START: Ensure stream handler uses UTF-8 to prevent UnicodeEncodeError
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(formatter)
+
+# Attempt to reconfigure the stream encoding to UTF-8
+if hasattr(stream_handler.stream, 'reconfigure'):
+    stream_handler.stream.reconfigure(encoding='utf-8')
+
+root_logger.addHandler(stream_handler)
+# FIX END
+
+logger = logging.getLogger("agentic-rag")
 
 # ===== LIFESPAN (startup/shutdown) =====
 @asynccontextmanager
@@ -33,14 +57,13 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting Agentic RAG backend...")
     logger.info(f"Base directory: {os.path.dirname(os.path.abspath(__file__))}")
 
-    try:
-        init_chroma()
-    except Exception as e:
-        logger.warning(f"ChromaDB init failed (will try on first use): {e}")
-
+    await metadata_store.init_db()
+    
     # Set event loop early for background threads
     set_event_loop(asyncio.get_running_loop())
     logger.info("✅ Event loop initialized for background tasks.")
+
+    yield
 
     # Optional: Warm up embedder model
     try:        
@@ -66,7 +89,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Agentic RAG API",
     description="""
-    🧠 Intelligent document processing & retrieval system with autonomous agents.
+    Intelligent document processing & retrieval system with autonomous agents.
 
     ## Features
     - Secure file upload & user isolation
